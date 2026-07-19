@@ -3,108 +3,127 @@
 namespace App\Http\Controllers;
 
 use App\Models\Postingan;
-use App\Models\JenisKonten;
-use App\Models\SumberKonten;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon; // Wajib dipanggil untuk manipulasi waktu
 
 class PostinganController extends Controller
 {
-    public function index()
+    /**
+     * Method untuk memuat halaman utama (Dashboard + Tabel Data)
+     */
+    public function dashboard(Request $request)
     {
-        $postingan = Postingan::with(['jenisKonten', 'sumberKonten'])
-                               ->latest()
-                               ->paginate(20);
+        // 1. Ambil parameter 'filter' dari URL (default: 'bulan')
+        $filter = $request->query('filter', 'bulan'); 
         
-        return view('postingan.index', compact('postingan'));
+        // 2. Siapkan query dasar dengan relasi agar pemuatan data lebih cepat (Eager Loading)
+        $query = Postingan::with(['jenisKonten', 'sumberKonten']);
+        $now = Carbon::now(); 
+
+        // 3. Logika Filter Waktu
+        switch ($filter) {
+            case 'hari':
+                $query->whereDate('created_at', $now->format('Y-m-d'));
+                $label_waktu = "Hari Ini";
+                break;
+            case 'minggu':
+                $query->whereBetween('created_at', [$now->startOfWeek()->format('Y-m-d'), $now->endOfWeek()->format('Y-m-d')]);
+                $label_waktu = "Minggu Ini";
+                break;
+            case 'tahun':
+                $query->whereYear('created_at', $now->year);
+                $label_waktu = "Tahun Ini";
+                break;
+            case 'bulan':
+            default:
+                $query->whereMonth('created_at', $now->month)
+                      ->whereYear('created_at', $now->year);
+                $label_waktu = "Bulan Ini";
+                break;
+        }
+
+        // 4. Eksekusi query, urutkan dari data paling baru
+        $postingan = $query->latest()->get();
+
+        // 5. Hitung Statistik
+        $total_konten = $postingan->count();
+        $total_foto = $postingan->where('jenis_konten_id', 1)->count(); // ID 1 = Foto
+        $total_video = $postingan->where('jenis_konten_id', 2)->count(); // ID 2 = Video
+
+        return view('dashboard', compact('postingan', 'filter', 'label_waktu', 'total_konten', 'total_foto', 'total_video'));
     }
 
+    /**
+     * Karena kita menggunakan route resource dan dashboard menampilkan halaman yang sama,
+     * method index diarahkan ke method dashboard.
+     */
+    public function index(Request $request)
+    {
+        return $this->dashboard($request);
+    }
+
+    /**
+     * Menampilkan form untuk menambah data baru.
+     */
     public function create()
     {
-        $jenisKonten = JenisKonten::all();
-        $sumberKonten = SumberKonten::all();
-        
-        return view('postingan.create', compact('jenisKonten', 'sumberKonten'));
+        return view('postingan.create');
     }
 
+    /**
+     * Menyimpan data baru ke database.
+     */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'link' => 'required|url|unique:postingan,link',
+        // Validasi data yang masuk dari form
+        $request->validate([
             'judul' => 'required|string|max:255',
-            'jenis_konten_id' => 'required|exists:jenis_konten,id',
-            'sumber_konten_id' => 'required|exists:sumber_konten,id',
-            'hashtag' => 'nullable|string',
+            'link' => 'required|url',
+            'jenis_konten_id' => 'required|integer',
+            'sumber_konten_id' => 'required|integer',
+            'tagar' => 'nullable|string|max:255',
         ]);
-        
-        Postingan::create([
-            ...$validated,
-            'user_id' => Auth::id(),
-        ]);
-        
-        return redirect()->route('postingan.index')
-                        ->with('success', 'Data postingan berhasil disimpan');
+
+        // Simpan ke database
+        Postingan::create($request->all());
+
+        // Redirect kembali ke dashboard dengan pesan sukses
+        return redirect()->route('dashboard')->with('success', 'Data konten berhasil ditambahkan!');
     }
 
+    /**
+     * Menampilkan form untuk mengedit data.
+     */
     public function edit(Postingan $postingan)
     {
-        $jenisKonten = JenisKonten::all();
-        $sumberKonten = SumberKonten::all();
-        
-        return view('postingan.edit', compact('postingan', 'jenisKonten', 'sumberKonten'));
+        return view('postingan.edit', compact('postingan'));
     }
 
+    /**
+     * Menyimpan perubahan data ke database.
+     */
     public function update(Request $request, Postingan $postingan)
     {
-        $validated = $request->validate([
-            'link' => 'required|url|unique:postingan,link,' . $postingan->id,
+        $request->validate([
             'judul' => 'required|string|max:255',
-            'jenis_konten_id' => 'required|exists:jenis_konten,id',
-            'sumber_konten_id' => 'required|exists:sumber_konten,id',
-            'hashtag' => 'nullable|string',
+            'link' => 'required|url',
+            'jenis_konten_id' => 'required|integer',
+            'sumber_konten_id' => 'required|integer',
+            'tagar' => 'nullable|string|max:255',
         ]);
-        
-        $postingan->update($validated);
-        
-        return redirect()->route('postingan.index')
-                        ->with('success', 'Data postingan berhasil diupdate');
+
+        $postingan->update($request->all());
+
+        return redirect()->route('dashboard')->with('success', 'Data konten berhasil diperbarui!');
     }
 
+    /**
+     * Menghapus data dari database.
+     */
     public function destroy(Postingan $postingan)
     {
         $postingan->delete();
-        
-        return redirect()->route('postingan.index')
-                        ->with('success', 'Data postingan berhasil dihapus');
-    }
 
-public function dashboard()
-{
-    $filter = request('filter', 'semua');
-    
-    $query = Postingan::with(['jenisKonten', 'sumberKonten']);
-    
-    if ($filter !== 'semua' && is_numeric($filter)) {
-        $query->where('jenis_konten_id', $filter);
-    }
-    
-    $postingan = $query->latest()->paginate(20);
-    
-    $totalKonten = Postingan::count();
-    $fotoCount = Postingan::where('jenis_konten_id', 1)->count();
-    $videoCount = Postingan::where('jenis_konten_id', 2)->count();
-    $infografikCount = Postingan::where('jenis_konten_id', 3)->count();
-    $flyerCount = Postingan::where('jenis_konten_id', 4)->count();
-    
-    return view('dashboard', compact(
-        'postingan',
-        'totalKonten',
-        'fotoCount',
-        'videoCount',
-        'infografikCount',
-        'flyerCount',
-        'filter'
-    ));
-
+        return redirect()->route('dashboard')->with('success', 'Data konten berhasil dihapus!');
     }
 }

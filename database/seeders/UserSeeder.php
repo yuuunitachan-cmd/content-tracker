@@ -18,6 +18,7 @@ class UserSeeder extends Seeder
             'email' => 'admin@diskominfo.com',
             'password' => bcrypt('password123'),
         ]);
+
       
     }
 }

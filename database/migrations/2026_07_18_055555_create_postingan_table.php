@@ -11,16 +11,24 @@ return new class extends Migration
      */
     public function up(): void
     {
-Schema::create('postingan', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-    $table->string('link')->unique();
-    $table->string('judul');
-    $table->foreignId('jenis_konten_id')->constrained('jenis_konten');
-    $table->foreignId('sumber_konten_id')->constrained('sumber_konten');
-    $table->string('hashtag')->nullable();
-    $table->timestamps();
-});
+        Schema::create('postingan', function (Blueprint $table) {
+            $table->id();
+            
+            // Kolom user_id diizinkan kosong (nullable) agar tidak error saat input
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
+            
+            // Tipe data text agar bisa menampung link yang sangat panjang
+            $table->text('link');
+            
+            $table->string('judul');
+            $table->foreignId('jenis_konten_id')->constrained('jenis_konten');
+            $table->foreignId('sumber_konten_id')->constrained('sumber_konten');
+            
+            // Nama kolom disesuaikan menjadi tagar agar sinkron dengan form HTML
+            $table->string('tagar')->nullable();
+            
+            $table->timestamps();
+        });
     }
 
     /**

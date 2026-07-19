@@ -10,7 +10,7 @@ Route::get('/', function () {
 });
 
 // Route untuk memuat halaman Dashboard beserta datanya
-Route::get('/dashboard', [PostinganController::class, 'dashboard'])
+Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
