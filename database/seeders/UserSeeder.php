@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash; // Menggunakan facades Hash lebih disarankan untuk best practice
 
 class UserSeeder extends Seeder
 {
@@ -12,21 +13,33 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create default admin user
-        User::create([
-            'name' => 'Admin Diskominfo',
-            'email' => 'admin@diskominfo.com',
-            'password' => bcrypt('password123'),
-        ]);
+        // 1. Amankan Akun Admin Diskominfo
+        User::updateOrCreate(
+            ['email' => 'admin@diskominfo.com'],
+            [
+                'name' => 'Admin Diskominfo',
+                'password' => Hash::make('password123'),
+            ]
+        );
 
-      
+        // 2. Amankan Akun Super Admin (Sesuai data terdeteksi di phpMyAdmin Anda)
+        User::updateOrCreate(
+            ['email' => 'super@diskominfo.com'],
+            [
+                'name' => 'Super Admin',
+                'password' => Hash::make('password123'),
+            ]
+        );
+
     }
 }
-/*
-  // Optional: Create another user
-        User::create([
-            'name' => 'Petugas Input',
-            'email' => 'petugas@diskominfo.com',
-            'password' => bcrypt('password123'),
-        ]);
 
+/*
+        // 3. Aktifkan Akun Petugas Input (Untuk Staf / Anak PKL sesuai SRS)
+        User::updateOrCreate(
+            ['email' => 'petugas@diskominfo.com'],
+            [
+                'name' => 'Petugas Input',
+                'password' => Hash::make('password123'),
+            ]
+        );

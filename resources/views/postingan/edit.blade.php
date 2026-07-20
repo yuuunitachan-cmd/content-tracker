@@ -1,61 +1,68 @@
-<x-app-layout>
+﻿<x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+        <h2 class="font-semibold text-xl text-primary leading-tight">
             {{ __('Edit Data Konten') }}
         </h2>
     </x-slot>
 
-    <div class="py-12">
+    <div class="py-12 bg-cloud min-h-screen">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    <form action="{{ route('postingan.update', $postingan->id) }}" method="POST" class="space-y-4">
+            <div class="bg-surface border border-primary/10 shadow-xl rounded-[1.5rem] overflow-hidden">
+                <div class="p-6 space-y-6">
+                    <div class="rounded-3xl bg-white/95 border border-primary/10 p-6 shadow-sm">
+                        <h3 class="text-lg font-bold text-primary">Form Edit Konten</h3>
+                        <p class="mt-2 text-sm text-primary/70">Perbarui detail publikasi konten yang sudah tersimpan.</p>
+                    </div>
+
+                    <form action="{{ route('postingan.update', $postingan->id) }}" method="POST" class="space-y-5">
                         @csrf
                         @method('PUT')
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Judul / Keterangan Singkat</label>
-                            <input type="text" name="judul" value="{{ $postingan->judul }}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+
+                        <div class="space-y-1">
+                            <label class="text-sm font-medium text-primary/80">Judul / Keterangan Singkat</label>
+                            <input type="text" name="judul" value="{{ old('judul', $postingan->judul) }}" required class="w-full rounded-2xl border border-primary/20 bg-white px-4 py-3 text-sm text-primary shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                            @error('judul')<p class="text-sm text-red-600">{{ $message }}</p>@enderror
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Link Postingan</label>
-                            <input type="url" name="link" value="{{ $postingan->link }}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <div class="space-y-1">
+                            <label class="text-sm font-medium text-primary/80">Link Postingan</label>
+                            <input type="url" name="link" value="{{ old('link', $postingan->link) }}" required class="w-full rounded-2xl border border-primary/20 bg-white px-4 py-3 text-sm text-primary shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                            @error('link')<p class="text-sm text-red-600">{{ $message }}</p>@enderror
                         </div>
 
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Jenis Konten</label>
-                                <select name="jenis_konten_id" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="1" {{ $postingan->jenis_konten_id == 1 ? 'selected' : '' }}>Foto</option>
-                                    <option value="2" {{ $postingan->jenis_konten_id == 2 ? 'selected' : '' }}>Video</option>
-                                    <option value="3" {{ $postingan->jenis_konten_id == 3 ? 'selected' : '' }}>Infografis</option>
-                                    <option value="4" {{ $postingan->jenis_konten_id == 4 ? 'selected' : '' }}>Flyer</option>
-                                    <option value="5" {{ $postingan->jenis_konten_id == 5 ? 'selected' : '' }}>Rilis Berita</option>
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div class="space-y-1">
+                                <label class="text-sm font-medium text-primary/80">Jenis Konten</label>
+                                <select name="jenis_konten_id" required class="w-full rounded-2xl border border-primary/20 bg-white px-4 py-3 text-sm text-primary shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20">
+                                    @foreach ($jenisKonten as $jenis)
+                                        <option value="{{ $jenis->id }}" {{ old('jenis_konten_id', $postingan->jenis_konten_id) == $jenis->id ? 'selected' : '' }}>{{ $jenis->nama }}</option>
+                                    @endforeach
                                 </select>
+                                @error('jenis_konten_id')<p class="text-sm text-red-600">{{ $message }}</p>@enderror
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Sumber Konten</label>
-                                <select name="sumber_konten_id" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="1" {{ $postingan->sumber_konten_id == 1 ? 'selected' : '' }}>IG Discominfo</option>
-                                    <option value="2" {{ $postingan->sumber_konten_id == 2 ? 'selected' : '' }}>IG Pemkot</option>
-                                    <option value="3" {{ $postingan->sumber_konten_id == 3 ? 'selected' : '' }}>Website</option>
+                            <div class="space-y-1">
+                                <label class="text-sm font-medium text-primary/80">Sumber Konten</label>
+                                <select name="sumber_konten_id" required class="w-full rounded-2xl border border-primary/20 bg-white px-4 py-3 text-sm text-primary shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20">
+                                    @foreach ($sumberKonten as $sumber)
+                                        <option value="{{ $sumber->id }}" {{ old('sumber_konten_id', $postingan->sumber_konten_id) == $sumber->id ? 'selected' : '' }}>{{ $sumber->nama }}</option>
+                                    @endforeach
                                 </select>
+                                @error('sumber_konten_id')<p class="text-sm text-red-600">{{ $message }}</p>@enderror
                             </div>
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Tagar (Hashtag)</label>
-                            <input type="text" name="tagar" value="{{ $postingan->tagar }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <div class="space-y-1">
+                            <label class="text-sm font-medium text-primary/80">Tagar (Hashtag)</label>
+                            <input type="text" name="tagar" value="{{ old('tagar', $postingan->tagar) }}" class="w-full rounded-2xl border border-primary/20 bg-white px-4 py-3 text-sm text-primary shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                            @error('tagar')<p class="text-sm text-red-600">{{ $message }}</p>@enderror
                         </div>
 
-                        <div class="flex items-center justify-end space-x-3 pt-4 border-t">
-                            <!-- TOMBOL BACK -->
-                            <a href="{{ route('postingan.index') }}" class="inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-gray-700 hover:bg-gray-300">
+                        <div class="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                            <a href="{{ route('postingan.index') }}" class="inline-flex items-center justify-center rounded-full border border-primary/20 bg-white px-5 py-3 text-sm font-semibold text-primary transition hover:bg-primary/5">
                                 Batal / Kembali
                             </a>
-                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-white hover:bg-blue-700">
+                            <button type="submit" class="inline-flex items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/10 transition hover:bg-primary/90">
                                 Update Data
                             </button>
                         </div>
